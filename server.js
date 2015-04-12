@@ -216,7 +216,7 @@ net.createServer(function (sock) {
 
                 clients[uid].nickname = nickname;
 
-                sock.write(getPkg.nickChangeOk);
+                sock.write(getPkg.nickChangeOk());
                 console.log("[DEBUG] Send nickChangeOk to uid " + uid + ".");
                 break;
             case 0x50:
