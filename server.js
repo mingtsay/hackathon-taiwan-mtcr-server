@@ -39,7 +39,9 @@ var getMinDisconnectedUID = function() {
 
 var sendToAllClients = function(pkg) {
     for (var uuid in clients) {
-        clients[uuid].socket.write(pkg);
+        if (clients[uuid].state == 2) {
+            clients[uuid].socket.write(pkg);
+        }
     }
 }
 
