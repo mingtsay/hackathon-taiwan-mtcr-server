@@ -175,6 +175,9 @@ net.createServer(function (sock) {
         return;
     }
 
+    clients[uid].state = 1;
+    clients[uid].socket = sock;
+
     console.log("[DEBUG] Connected from " + sock.remoteAddress + ":" + sock.remotePort + " with uid " + uid + ".");
 
     sock.on('data', function(data) {
