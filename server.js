@@ -175,7 +175,11 @@ net.createServer(function (sock) {
         return;
     }
 
+    console.log("[DEBUG] Connected from " + sock.remoteAddress + ":" + sock.remotePort + " with uid " + uid + ".");
+
     sock.on('data', function(data) {
+        console.log("[DEBUG] Got data from uid " + uid + ": " + data);
+
         if (cmpBin(4, data, new Buffer("MTCR")) != -1 || data[4] != version.protocol) {
             sock.write(getPkg.unknown());
             return;
@@ -229,6 +233,7 @@ net.createServer(function (sock) {
     });
 
     sock.on('close', function () {
+        console.log("[DEBUG] Closed by uid " + uid + ".");
         if (clients[uid].state == 2) {
             sendToAllClients(getPkg.leave(uid));
         }
