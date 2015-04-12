@@ -227,6 +227,11 @@ net.createServer(function (sock) {
                 console.log("[DEBUG] Send nickChangeOk to uid " + uid + ".");
                 console.log(getPkg.nickChangeOk());
                 sock.write(getPkg.nickChangeOk());
+
+
+                console.log("[DEBUG] Send leave to all.");
+                console.log(getPkg.nickChange(uid, nickname));
+                sendToAllClients(getPkg.nickChange(uid, nickname));
                 break;
             case 0x50:
                 var color = data[6];
