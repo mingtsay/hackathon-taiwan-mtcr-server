@@ -43,6 +43,12 @@ var sendToAllClients = function(pkg) {
     }
 }
 
+var cmpBin = function(len, a, b) {
+    for (var i = 0; i < len; ++i)
+        if (a[i] - b[i]) return i;
+    return -1;
+}
+
 var getPkg = {
     version: function() {
         return new Buffer(
@@ -170,7 +176,56 @@ net.createServer(function (sock) {
     }
 
     sock.on('data', function(data) {
-        console.log(data);
+        if (cmpBin(4, data, new Buffer("MTCR")) != -1 || data[4] != version.protocol) {
+            sock.write(getPkg.unknown());
+            return;
+        }
+
+        var type = data[5];
+        switch (type) {
+            case 0x00:
+                sock.write(getPkg.version());
+                break;
+            case 0x10:
+                var nicknameLength = data[6];
+                var nickname = data.slice(7, 7 + nicknameLength);
+                break;
+//            case 0x20:
+//                var passwordLength = data[6];
+//                var password = data.slice(7, passwordLength);
+//                break;
+//            case 0x40:
+//                var nicknameLength = data[6];
+//                var nickname = data.slice(7, 7 + nicknameLength);
+//                break;
+            case 0x50:
+                var color = data[6];
+                var messageLength = data[7] + data[8] * 256;
+                var message = data.slice(9, 9 + messageLength);
+
+                sendToAllClients(getPkg.msg(uid, color, message));
+                break;
+            case 0x51:
+                var toUID = data[6];
+                var color = data[7];
+                var messageLength = data[8] + data[9] * 256;
+                var message = data.slice(10, 10 + messageLength);
+
+                if (clients[uid].state == 2 && clients[toUID].state == 2) {
+                    clients[toUID].socket.write(getPkg.msgPrivate(uid, toUID, color, message));
+                    sock.write(getPkg.msgPrivate(uid, toUID, color, message));
+                    sock.write(getPkg.msgPrivateOk());
+                } else {
+                    sock.write(getPkg.msgPrivateFail());
+                }
+
+                break;
+            case 0x60:
+                sock.write(getPkg.online());
+                break;
+            default:
+                sock.write(getPkg.unknown());
+        }
     });
 
     sock.on('close', function () {
