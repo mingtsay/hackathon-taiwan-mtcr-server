@@ -210,10 +210,15 @@ net.createServer(function (sock) {
 //                var passwordLength = data[6];
 //                var password = data.slice(7, passwordLength);
 //                break;
-//            case 0x40:
-//                var nicknameLength = data[6];
-//                var nickname = data.slice(7, 7 + nicknameLength);
-//                break;
+            case 0x40:
+                var nicknameLength = data[6];
+                var nickname = data.slice(7, 7 + nicknameLength);
+
+                clients[uid].nickname = nickname;
+
+                sock.write(getPkg.nickChangeOk);
+                console.log("[DEBUG] Send nickChangeOk to uid " + uid + ".");
+                break;
             case 0x50:
                 var color = data[6];
                 var messageLength = data[7] + data[8] * 256;
