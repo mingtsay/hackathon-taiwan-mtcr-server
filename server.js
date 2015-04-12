@@ -178,9 +178,11 @@ net.createServer(function (sock) {
     console.log("[DEBUG] Connected from " + sock.remoteAddress + ":" + sock.remotePort + " with uid " + uid + ".");
 
     sock.on('data', function(data) {
+        data = new Buffer(data);
         console.log("[DEBUG] Got data from uid " + uid + ": " + data);
 
         if (cmpBin(4, data, new Buffer("MTCR")) != -1 || data[4] != version.protocol) {
+            console.log("[DEBUG] Send unknown to uid " + uid + ".");
             sock.write(getPkg.unknown());
             return;
         }
@@ -188,11 +190,18 @@ net.createServer(function (sock) {
         var type = data[5];
         switch (type) {
             case 0x00:
+                console.log("[DEBUG] Send version to uid " + uid + ".");
                 sock.write(getPkg.version());
                 break;
             case 0x10:
                 var nicknameLength = data[6];
                 var nickname = data.slice(7, 7 + nicknameLength);
+
+                clients[uid].nickname = nickname;
+                clients[uid].state = 2;
+                
+                sock.write(getPkg.loginOk());
+                console.log("[DEBUG] Send loginOk to uid " + uid + ".");
                 break;
 //            case 0x20:
 //                var passwordLength = data[6];
@@ -207,6 +216,7 @@ net.createServer(function (sock) {
                 var messageLength = data[7] + data[8] * 256;
                 var message = data.slice(9, 9 + messageLength);
 
+                console.log("[DEBUG] Send msg to all.");
                 sendToAllClients(getPkg.msg(uid, color, message));
                 break;
             case 0x51:
@@ -219,15 +229,19 @@ net.createServer(function (sock) {
                     clients[toUID].socket.write(getPkg.msgPrivate(uid, toUID, color, message));
                     sock.write(getPkg.msgPrivate(uid, toUID, color, message));
                     sock.write(getPkg.msgPrivateOk());
+                    console.log("[DEBUG] Send msgPrivate to uid " + uid + ", " + toUID + ".");
                 } else {
                     sock.write(getPkg.msgPrivateFail());
+                    console.log("[DEBUG] Send msgPrivateFail to uid " + uid + ".");
                 }
 
                 break;
             case 0x60:
+                console.log("[DEBUG] Send online to uid " + uid + ".");
                 sock.write(getPkg.online());
                 break;
             default:
+                console.log("[DEBUG] Send unknown to uid " + uid + ".");
                 sock.write(getPkg.unknown());
         }
     });
@@ -235,6 +249,7 @@ net.createServer(function (sock) {
     sock.on('close', function () {
         console.log("[DEBUG] Closed by uid " + uid + ".");
         if (clients[uid].state == 2) {
+            console.log("[DEBUG] Send leave to all.");
             sendToAllClients(getPkg.leave(uid));
         }
     });
