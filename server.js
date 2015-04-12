@@ -153,7 +153,7 @@ var getPkg = {
         for (var i = 0; i < 256; ++i)
             if (clients[i].state == 2) {
                 ++count;
-                list += new Buffer(new Buffer(numToBin(1, i) + numToBin(1, clients[i].nickname.length)) + clients[i].nickname);
+                list += new Buffer(numToBin(1, i) + numToBin(1, clients[i].nickname.length) + clients[i].nickname);
             }
 
         return new Buffer(
@@ -196,6 +196,7 @@ net.createServer(function (sock) {
         switch (type) {
             case 0x00:
                 console.log("[DEBUG] Send version to uid " + uid + ".");
+                console.log(getPkg.version());
                 sock.write(getPkg.version());
                 break;
             case 0x10:
@@ -205,8 +206,13 @@ net.createServer(function (sock) {
                 clients[uid].nickname = nickname;
                 clients[uid].state = 2;
 
-                sock.write(getPkg.loginOk());
                 console.log("[DEBUG] Send loginOk to uid " + uid + ".");
+                console.log(getPkg.loginOk());
+                sock.write(getPkg.loginOk());
+
+                console.log("[DEBUG] Send join to all.");
+                console.log(getPkg.join(uid, clients[uid].nickname));
+                sendToAllClients(getPkg.join(uid, clients[uid].nickname));
                 break;
 //            case 0x20:
 //                var passwordLength = data[6];
@@ -218,8 +224,9 @@ net.createServer(function (sock) {
 
                 clients[uid].nickname = nickname;
 
-                sock.write(getPkg.nickChangeOk());
                 console.log("[DEBUG] Send nickChangeOk to uid " + uid + ".");
+                console.log(getPkg.nickChangeOk());
+                sock.write(getPkg.nickChangeOk());
                 break;
             case 0x50:
                 var color = data[6];
@@ -227,6 +234,7 @@ net.createServer(function (sock) {
                 var message = data.slice(9, 9 + messageLength);
 
                 console.log("[DEBUG] Send msg to all.");
+                console.log(getPkg.msg(uid, color, message));
                 sendToAllClients(getPkg.msg(uid, color, message));
                 break;
             case 0x51:
@@ -238,10 +246,12 @@ net.createServer(function (sock) {
                 if (clients[uid].state == 2 && clients[toUID].state == 2) {
                     clients[toUID].socket.write(getPkg.msgPrivate(uid, toUID, color, message));
                     console.log("[DEBUG] Send msgPrivate to uid " + uid + ", " + toUID + ".");
+                    console.log(getPkg.msgPrivate(uid, toUID, color, message));
                     sock.write(getPkg.msgPrivate(uid, toUID, color, message));
                     sock.write(getPkg.msgPrivateOk());
                 } else {
                     console.log("[DEBUG] Send msgPrivateFail to uid " + uid + ".");
+                    console.log(getPkg.msgPrivateFail());
                     sock.write(getPkg.msgPrivateFail());
                 }
 
