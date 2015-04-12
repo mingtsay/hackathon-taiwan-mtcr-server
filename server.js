@@ -251,6 +251,7 @@ net.createServer(function (sock) {
 
     sock.on('close', function () {
         console.log("[DEBUG] Closed by uid " + uid + ".");
+        clients[uid].state = 0;
         if (clients[uid].state == 2) {
             console.log("[DEBUG] Send leave to all.");
             sendToAllClients(getPkg.leave(uid));
