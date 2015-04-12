@@ -153,7 +153,7 @@ var getPkg = {
         for (var i = 0; i < 256; ++i)
             if (clients[i].state == 2) {
                 ++count;
-                list += new Buffer(numToBin(1, i) + numToBin(1, clients[i].nickname.length) + clients[i].nickname);
+                list += new Buffer(new Buffer(numToBin(1, i) + numToBin(1, clients[i].nickname.length)) + clients[i].nickname);
             }
 
         return new Buffer(
@@ -237,21 +237,23 @@ net.createServer(function (sock) {
 
                 if (clients[uid].state == 2 && clients[toUID].state == 2) {
                     clients[toUID].socket.write(getPkg.msgPrivate(uid, toUID, color, message));
+                    console.log("[DEBUG] Send msgPrivate to uid " + uid + ", " + toUID + ".");
                     sock.write(getPkg.msgPrivate(uid, toUID, color, message));
                     sock.write(getPkg.msgPrivateOk());
-                    console.log("[DEBUG] Send msgPrivate to uid " + uid + ", " + toUID + ".");
                 } else {
-                    sock.write(getPkg.msgPrivateFail());
                     console.log("[DEBUG] Send msgPrivateFail to uid " + uid + ".");
+                    sock.write(getPkg.msgPrivateFail());
                 }
 
                 break;
             case 0x60:
                 console.log("[DEBUG] Send online to uid " + uid + ".");
+                console.log(getPkg.online());
                 sock.write(getPkg.online());
                 break;
             default:
                 console.log("[DEBUG] Send unknown to uid " + uid + ".");
+                console.log(getPkg.unknown());
                 sock.write(getPkg.unknown());
         }
     });
@@ -261,6 +263,7 @@ net.createServer(function (sock) {
         clients[uid].state = 0;
         if (clients[uid].state == 2) {
             console.log("[DEBUG] Send leave to all.");
+            console.log(getPkg.leave(uid));
             sendToAllClients(getPkg.leave(uid));
         }
     });
