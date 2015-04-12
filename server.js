@@ -178,8 +178,8 @@ net.createServer(function (sock) {
     console.log("[DEBUG] Connected from " + sock.remoteAddress + ":" + sock.remotePort + " with uid " + uid + ".");
 
     sock.on('data', function(data) {
-        data = new Buffer(data);
         console.log("[DEBUG] Got data from uid " + uid + ": " + data);
+        console.log(data);
 
         if (cmpBin(4, data, new Buffer("MTCR")) != -1 || data[4] != version.protocol) {
             console.log("[DEBUG] Send unknown to uid " + uid + ".");
@@ -199,7 +199,7 @@ net.createServer(function (sock) {
 
                 clients[uid].nickname = nickname;
                 clients[uid].state = 2;
-                
+
                 sock.write(getPkg.loginOk());
                 console.log("[DEBUG] Send loginOk to uid " + uid + ".");
                 break;
